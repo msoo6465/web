@@ -3,37 +3,9 @@ var fs = require('fs');
 var url = require('url');
 var qs = require('querystring')
 
-var template = {
-  html:function(title, list, body, control){
-    return `<!doctype html>
-    <html>
-    <head>
-      <title>WEB1 - ${title}</title>
-      <meta charset="utf-8">
-    </head>
-    <body>
-      <h1><a href="/">WEB</a></h1>
-      ${list}
-      ${control}
-      ${body}
-      </p>
-    </body>
-    </html>
-    `;
-  },
-  list:function(filelist){
-    var list = '<ul>';
-    var i = 0;
-    while (i < filelist.length) {
-      // list = list + `<li>${filelist[i]}</li>`;
-      list = list + `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
-      i = i + 1;
-    }
-    list = list + '</ul>';
-    return list
-  }
-}
+var template = require('./lib/template.js')
 
+var path = require('path');
 
 var app = http.createServer(function(request,response){
     var _url = request.url;
@@ -58,7 +30,8 @@ var app = http.createServer(function(request,response){
 
       }else {
         fs.readdir('./data',function(error, filelist){
-          fs.readFile(`data/${queryData.id}`,'utf8',function(err,description){
+          var filteredPath = path.parse(queryData.id).base
+          fs.readFile(`data/${filteredPath}`,'utf8',function(err,description){
             var title = queryData.id;
             var list = template.list(filelist)
             var html = template.html(title, list, `<h2>${title}</h2><p>${description}`,
@@ -109,7 +82,8 @@ var app = http.createServer(function(request,response){
       });
     }else if (pathname === "/update") {
       fs.readdir('./data',function(error, filelist){
-        fs.readFile(`data/${queryData.id}`,'utf8',function(err,description){
+        var filteredPath = path.parse(queryData.id).base
+        fs.readFile(`data/${filteredPath}`,'utf8',function(err,description){
           var title = queryData.id;
           var list = template.list(filelist)
           var html = template.html(title, list, `<form action="/update_process" method="post">
@@ -152,11 +126,10 @@ var app = http.createServer(function(request,response){
 
     request.on('end',function(){
       var post = qs.parse(body);
-      console.log(post);
       var id = post.id;
+      var filteredId = path.parse(id).base
 
-      fs.unlink(`data/${id}`,function(error){
-        console.log(`remove ${id}`);
+      fs.unlink(`data/${filteredId}`,function(error){
         response.writeHead(302,{Location:`/`});
         response.end();
       })
