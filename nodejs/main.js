@@ -2,10 +2,9 @@ var http = require('http');
 var fs = require('fs');
 var url = require('url');
 var qs = require('querystring')
-
 var template = require('./lib/template.js')
-
 var path = require('path');
+var sanitizeHtml = require('sanitize-html');
 
 var app = http.createServer(function(request,response){
     var _url = request.url;
@@ -17,7 +16,7 @@ var app = http.createServer(function(request,response){
           var title = 'Welcome';
           var description = 'Hello, Node.js'
           var list = template.list(filelist);
-          var html = template.html(title, list, `<h2>${title}</h2><p>${description}`,
+          var html = template.HTML(title, list, `<h2>${title}</h2><p>${description}`,
           `<a href="/create">create</a>`)
           response.writeHead(200);
           response.end(html);
@@ -33,13 +32,16 @@ var app = http.createServer(function(request,response){
           var filteredPath = path.parse(queryData.id).base
           fs.readFile(`data/${filteredPath}`,'utf8',function(err,description){
             var title = queryData.id;
+            var sanitizeTitle = sanitizeHtml(title)
+            var sanitizeDescription = sanitizeHtml(description, {allowedTag:['h1']})
             var list = template.list(filelist)
-            var html = template.html(title, list, `<h2>${title}</h2><p>${description}`,
-              `<a href="/create">create </a> <a href="/update?id=${title}">update</a>
+            var html = template.HTML(sanitizeTitle, list, `<h2>${sanitizeTitle}</h2><p>${sanitizeDescription}`,
+              `<a href="/create">create </a> <a href="/update?id=${sanitizeTitle}">update</a>
             <form action="delete_process" method="post" onsubmit="really?">
-              <input type="hidden" name="id" value=${title}>
+              <input type="hidden" name="id" value=${sanitizeTitle}>
               <input type="submit" value="delete">
-            </form>`);
+            </form>`
+          );
             response.writeHead(200);
             response.end(html);
         });
@@ -51,7 +53,7 @@ var app = http.createServer(function(request,response){
         fs.readdir('./data',function(error, filelist){
           var title = 'WEB - create';
           var list = template.list(filelist)
-          var html = template.html(title, list, `<form action="http://localhost:3000/create_process" method="post">
+          var html = template.HTML(title, list, `<form action="http://localhost:3000/create_process" method="post">
             <p><input type="text" name="title" placeholder="title"></p>
             <p>
               <textarea name="description" placeholder="description"></textarea>
@@ -86,7 +88,7 @@ var app = http.createServer(function(request,response){
         fs.readFile(`data/${filteredPath}`,'utf8',function(err,description){
           var title = queryData.id;
           var list = template.list(filelist)
-          var html = template.html(title, list, `<form action="/update_process" method="post">
+          var html = template.HTML(title, list, `<form action="/update_process" method="post">
           <input type="hidden" name="id" value="${title}">
             <p><input type="text" name="title" placeholder="title" value="${title}"></p>
             <p>

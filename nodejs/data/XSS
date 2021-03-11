@@ -1,0 +1,4 @@
+&lt;script&gt;
+location.href = "http://www.naver.com"
+alert('merong');
+&lt;/script&gt;
